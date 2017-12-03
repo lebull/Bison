@@ -13,7 +13,8 @@ deviceMap = {
 #Proto Config
 P_B1 = 12
 
-SERVER_IP = "192.168.0.102"
+#SERVER_IP = "192.168.0.102"
+SERVER_IP = "192.168.1.105"
 PORT = 8990
 
 
@@ -40,7 +41,6 @@ class IOClient(TCPClient):
             stream.close()
         """
 
-
     @gen.coroutine
     def _write(self, message):
         """Send the text to the server and print the reply."""
@@ -52,10 +52,10 @@ class IOClient(TCPClient):
         #print(reply.decode(options.encoding).strip())
 
     def onPress(self, button):
-        self._write("{}, {}".format(button.did, "press"))
+        self._write("{}, {}".format(button.did, "1"))
 
     def onUnPress(self, button):
-        self._write("{}, {}".format(button.did, "unpress"))
+        self._write("{}, {}".format(button.did, "0"))
 
     def tick(self):
         self.button.tick()
