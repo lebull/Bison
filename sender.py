@@ -1,8 +1,10 @@
-import RPi.GPIO as GPIO
+
 import time
 from tornado.tcpclient import TCPClient
 import tornado.ioloop
 from tornado import gen
+
+from BisonInput import DirectButton
 
 deviceMap = {
     1: 12
@@ -59,53 +61,6 @@ class IOClient(TCPClient):
         self.button.tick()
 
 
-class DirectButton:
-    def __init__(self, pin, did, onPress=None, onUnPress=None):
-        self.pin = pin
-        self.did = did
-
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-
-        self.pressed = False
-        if(onPress):
-            self.setOnPress(onPress)
-        if(onUnPress):
-            self.setOnUnPress(onUnPress)
-
-    def setOnPress(self, callback):
-        self.onPress = callback
-
-    def setOnUnPress(self, callback):
-        self.onUnPress = callback
-
-    def _onPress(self):
-        if(self.onPress):
-            self.onPress(self)
-
-    def onPress(self, button):
-        pass
-
-    def _onUnPress(self):
-        if(self.onUnPress):
-            self.onUnPress(self)
-
-    def onUnPress(self, button):
-        pass
-
-    def tick(self):
-        pressed = GPIO.input(self.pin) # if port 25 == 1)
-
-        #if the value changes
-        if(self.pressed != pressed):
-            if(pressed):
-                self.onPress(self)
-            else:
-                self.onUnPress(self)
-
-            self.pressed = pressed
-
 if __name__ == "__main__":
     # @gen.coroutine
     # def run_client():
@@ -118,7 +73,7 @@ if __name__ == "__main__":
     #         stream.close()
 
     client = IOClient()
-    tornado.ioloop.PeriodicCallback(client.tick, 50).start()
+    tornado.ioloop.PeriodicCallback(client.tick, 20).start()
     client.runClient()
     tornado.ioloop.IOLoop.current().start()
     #tornado.ioloop.IOLoop.instance().run_sync(client.runClient)
