@@ -4,7 +4,7 @@ from tornado.tcpclient import TCPClient
 import tornado.ioloop
 from tornado import gen
 
-from BisonInput import DirectButton
+from BisonInput import DirectButton, AnalogInput
 
 deviceMap = {
     1: 12
@@ -20,11 +20,20 @@ PORT = 8990
 
 class IOClient(TCPClient):
     def __init__(self, *args, **kwargs):
+
         self.button = DirectButton(
             pin = P_B1,
-            did = 1,
+            did = ("b", 1),
             onPress = self.onPress,
             onUnPress = self.onUnPress)
+
+        self.knob = AnalogInput(
+            did = ("a", 1),
+            bus = 0,
+            device = 0,
+            channel = 1,
+            outer_deadzone = 0.005,
+            onChange = self.onAxis)
 
         super(TCPClient, self).__init__(*args, **kwargs)
 
@@ -32,14 +41,6 @@ class IOClient(TCPClient):
     def runClient(self):
         print "Connecting to {}:{}".format(SERVER_IP, PORT)
         self.stream = yield TCPClient().connect(SERVER_IP, PORT)
-        """
-        try:
-            while True:
-                data = input('(echo) ')
-                yield echo(stream, data)
-        except KeyboardInterrupt:
-            stream.close()
-        """
 
     @gen.coroutine
     def _write(self, message):
@@ -57,8 +58,12 @@ class IOClient(TCPClient):
     def onUnPress(self, button):
         self._write("{}, {}".format(button.did, "0"))
 
+    def onAxis(self, axis):
+        self._write("{}, {}".format(axis.did, axis.getValue()))
+
     def tick(self):
         self.button.tick()
+        self.knob.tick()
 
 
 if __name__ == "__main__":
@@ -75,6 +80,7 @@ if __name__ == "__main__":
     client = IOClient()
     tornado.ioloop.PeriodicCallback(client.tick, 20).start()
     client.runClient()
+    #tornado.ioloop.IOLoop.instance().run_sync(client.runClient)
     tornado.ioloop.IOLoop.current().start()
     #tornado.ioloop.IOLoop.instance().run_sync(client.runClient)
     #server.connect("192.168.1.109", "8990")

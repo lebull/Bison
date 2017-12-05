@@ -4,17 +4,17 @@ from tornado import gen
 import tornado.ioloop
 
 import pyvjoy
+import signal
+import logging
 
 
 PORT = 8990
-
-
-
 
 class EchoServer(TCPServer):
 
     def __init__(self, *args, **kwargs):
         self.vjoy = pyvjoy.VJoyDevice(1)
+        self.is_closing = False
         super(EchoServer, self).__init__(*args, **kwargs)
 
     @gen.coroutine
@@ -26,16 +26,36 @@ class EchoServer(TCPServer):
                 print data
 
                 message = data.split(", ")
-                did = int(message[0])
+                did_raw = int(message[0])
+                did_type = did[0]
+                did = did[1]
                 state = int(message[1])
-                print "Setting {} to {}".format(did, state)
-                self.vjoy.set_button(did,state)
+                print "Setting {}{} to {}".format(did_type, did, state)
+
+                if(did_type == "a"):
+                    self.vjoy.set_axis(HID_USAGE_X,state * 0x8000)
+                else:
+                    self.vjoy.set_button(did,state)
             except StreamClosedError:
                 break
+
+
+
+    def _try_exit(self):
+        if self.is_closing:
+            # clean up here
+            tornado.ioloop.IOLoop.instance().stop()
+            logging.info('exit success')
+
+    def _signal_handler(self, signum, frame):
+        logging.info('exiting...')
+        self.is_closing = True
 
 if __name__ == "__main__":
     server = EchoServer()
     server.listen(PORT)
     print "Listening on port {}".format(PORT)
     #server.start()
+    signal.signal(signal.SIGINT, server._signal_handler)
+    tornado.ioloop.PeriodicCallback(server._try_exit, 100).start()
     tornado.ioloop.IOLoop.current().start()

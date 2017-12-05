@@ -1,4 +1,5 @@
 import RPi.GPIO as GPIO
+import spidev
 
 class Button(object):
     """
@@ -64,8 +65,11 @@ class DirectButton(Button):
         self.setPressed( GPIO.input(self.pin) )
 
 class AnalogInput(object):
-    def __init__(self, bus, device, channel, outer_deadzone = None):
+    def __init__(self, did, bus, device, channel, outer_deadzone = None, onChange = None):
 
+        self.value = 0
+
+        self.did = did
         self.bus = bus
         self.device = device
         self.channel = channel
@@ -74,6 +78,8 @@ class AnalogInput(object):
         if(outer_deadzone):
             self.odz = outer_deadzone
 
+        if(onChange):
+            self.onChange = onChange
 
         self.spi = spidev.SpiDev()
         self.spi.open(0, 0)
@@ -89,6 +95,24 @@ class AnalogInput(object):
         clamped_percent = min(max(0, adjusted_percentage), 1)
 
         return clamped_percent
+
+    def getValue(self):
+        return self.value
+
+    def setValue(self, value):
+        if(value != self.value):
+            self.value = value
+            self._onChange()
+
+    def _onChange(self):
+        self.onChange(self)
+
+    def onChange(self, analogInput):
+        """Placeholder change event"""
+        pass
+
+    def tick(self):
+        self.setValue( self.read() )
 
 if __name__ == "__main__":
     pass

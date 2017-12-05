@@ -1,6 +1,3 @@
 [submodule "pvjoy"]
 	path = pvjoy
 	url = https://github.com/tidzo/pyvjoy.git
-[submodule "pypvjoy"]
-	path = pypvjoy
-	url = https://github.com/tidzo/pyvjoy.git
