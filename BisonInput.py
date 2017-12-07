@@ -1,3 +1,5 @@
+#TODO:  Set a trigger threshold for change event for analog inputs
+
 import RPi.GPIO as GPIO
 import spidev
 

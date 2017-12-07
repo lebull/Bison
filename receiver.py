@@ -1,3 +1,6 @@
+#TODO: https://stackoverflow.com/questions/9763116/parse-a-tuple-from-a-string
+# Parse tuple from string for the type/id combo of the did
+
 from tornado.tcpserver import TCPServer
 from tornado.iostream import StreamClosedError
 from tornado import gen
