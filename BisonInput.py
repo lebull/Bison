@@ -2,6 +2,7 @@
 
 import RPi.GPIO as GPIO
 import spidev
+import time
 
 class Button(object):
     """
@@ -115,6 +116,60 @@ class AnalogInput(object):
 
     def tick(self):
         self.setValue( self.read() )
+
+class ButtonChain(object):
+    """
+        Reads a gpio pin directly as the value of the button.  This is a shitty
+        blocking implimentation, but idc
+    """
+    def __init__(self):
+        self.pins = {
+            "SER":   31, #Data In
+            "OE":    33, #Output Enable
+            "RCLK":  35, #Shift Clock
+            "SRCLK": 36, #Shift Register Clock (Move shift reg to reg)
+            "SRCLR": 37  #Shift Register Clear
+        }
+
+        self.readPin = 32
+
+        self.length = 8
+        self.freq = 100
+        GPIO.setmode(GPIO.BOARD)
+        for (name, pinid) in self.pins:
+            GPIO.setup(pinid, GPIO.OUT)
+
+        self.rclk =  GPIO.PWM(self.pins["RCLK"], self.freq)
+        self.srclk = GPIO.PWM(self.pins["SRCLK"], self.freq)
+
+    def _halfTickDuration(self):
+        return 1.0/(self.freq*2)
+
+    def poll(self):
+        #get the clocks a startin' and send one down
+        self.rclk.start(50)
+        time.sleep(self._halfTickDuration())
+        self.sclk.start(50)
+
+        time.sleep(self._halfTickDuration())
+
+
+
+
+        #Figure out what the crap happens
+        i = 0
+        while True:
+
+            #Do Stuff
+            GPIO.input(self.readPin)
+            i++
+            if(i == self.length):
+                break
+
+
+        #Send one down
+    def tick(self):
+        self.setPressed( GPIO.input(self.pin) )
 
 if __name__ == "__main__":
     pass
