@@ -4,7 +4,7 @@ from tornado.tcpclient import TCPClient
 import tornado.ioloop
 from tornado import gen
 
-from BisonInput import DirectButton, AnalogInput
+from BisonInput import DirectButton, AnalogInput, ButtonChain
 
 deviceMap = {
     1: 12
@@ -21,6 +21,15 @@ PORT = 8990
 class IOClient(TCPClient):
     def __init__(self, *args, **kwargs):
 
+
+        self.buttonChain = ButtonChain(
+            frequency=5000,
+            cycles = 66,
+            didOffset = 2,
+            onPress = self.onPress,
+            onUnPress = self.onUnPress)
+
+
         self.button = DirectButton(
             pin = P_B1,
             did = ("b", 1),
@@ -34,6 +43,8 @@ class IOClient(TCPClient):
             channel = 1,
             outer_deadzone = 0.005,
             onChange = self.onAxis)
+
+        #self.buttonChain = ButtonChain()
 
         super(TCPClient, self).__init__(*args, **kwargs)
 
@@ -62,6 +73,7 @@ class IOClient(TCPClient):
         self._write("{}, {}".format(axis.did, axis.getValue()))
 
     def tick(self):
+        self.buttonChain.sweep()
         self.button.tick()
         self.knob.tick()
 

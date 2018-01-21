@@ -26,23 +26,44 @@ class EchoServer(TCPServer):
             try:
                 data = yield stream.read_until(b"\n")
                 #yield stream.write(data)
-                print data
 
-                message = data.split(", ")
-                did_raw = int(message[0])
-                did_type = did[0]
-                did = did[1]
-                state = int(message[1])
-                print "Setting {}{} to {}".format(did_type, did, state)
+
+                message = self.parseMessage(data)
+
+                did_raw = message[0]
+                did_type = str(did_raw[0].replace("'",""))
+                did_number = int(did_raw[1])
+                state = float(message[1][0])
+                print "Setting {} {} to {}".format(did_type, did_number, state)
 
                 if(did_type == "a"):
-                    self.vjoy.set_axis(HID_USAGE_X,state * 0x8000)
+                    dev = pyvjoy.HID_USAGE_Z
+                    val = int(state * 0x8000)
+                    #val = "{0:#0{1}x}".format(val,6)
+                    #val = 0x4000
+                    print "DEBUG: {}, {}".format(dev, val)
+                    self.vjoy.set_axis(dev, val)
+                    #self.vjoy.update()
+
                 else:
-                    self.vjoy.set_button(did,state)
+                    print "\n{}\n".format(state)
+
+                    self.vjoy.set_button(did_number,int(state))
             except StreamClosedError:
                 break
 
+    def parseMessage(self, message):
 
+        messageParts = message.rsplit(",", 1)
+        for i in range(len(messageParts)):
+            messageParts[i] = messageParts[i]    \
+                .replace("(", "")   \
+                .replace(")", "")   \
+                .replace(" ", "")   \
+                .replace(r"\n", "")  \
+                .split(",")
+
+        return messageParts[0], messageParts[1]
 
     def _try_exit(self):
         if self.is_closing:
